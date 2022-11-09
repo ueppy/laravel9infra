@@ -1,0 +1,50 @@
+version: "3.8"
+volumes:
+  db-store:
+services:
+  web:
+    container_name: local_web
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    ports:
+      - 8888:80
+    volumes:
+      - ./project:/var/www/html
+  db:
+    container_name: local_db
+    build:
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
+    ports:
+      - 13306:3306
+    volumes:
+      - db-store:/var/lib/mysql
+      #- mysql-data:/var/lib/mysql:cached #:cachedを追加
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret  # rootパスワード
+      - MYSQL_DATABASE=laravel_local # 初期構成時の標準DB
+      - MYSQL_USER=phper # 〃の標準ユーザーのユーザー名
+      - MYSQL_PASSWORD=secret # 〃の標準ユーザーのパスワード
+    restart: always
+
+  phpmyadmin:
+    container_name: local_phpMyAdmin
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+      #- PMA_USER=phper # mysqlの接続ユーザーのユーザー名
+      #- PMA_PASSWORD=secret # mysqlの接続ユーザーのパスワード
+    links:
+      - db
+    ports:
+      - 14000:80
+    volumes:
+      - ./docker/phpmyadmin/sessions:/sessions
+      - ./docker/phpmyadmin/php.ini:/usr/local/etc/php/conf.d/phpmyadmin-misc.ini
+    restart: always
+    #サーバー名:db
+    #id:phper
+    #pass:secret
